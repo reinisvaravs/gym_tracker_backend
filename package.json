@@ -1,0 +1,41 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx --env-file=.env src/server.ts",
+    "build": "tsc",
+    "start": "node --env-file=.env dist/server.js",
+    "knip": "knip --include exports",
+    "lint": "eslint .",
+    "format": "npx prettier . --write",
+    "check": "npm run format && npm run lint && npm run knip"
+  },
+  "author": "Reinis Varavs",
+  "license": "ISC",
+  "description": "Backend for gym stats application",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.3.0",
+    "@types/pg": "^8.23.1",
+    "eslint": "^9.39.5",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-n": "^18.3.0",
+    "eslint-plugin-security": "^4.0.1",
+    "globals": "^17.11.0",
+    "knip": "^6.32.3",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
+  }
+}

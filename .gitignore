@@ -1,0 +1,61 @@
+.prettierignore
+*.rest
+
+# Output from the security-toolkit scans (gitleaks / trufflehog / depscan).
+# MUST stay ignored: a gitleaks report contains the matched `Secret` and
+# `Match` values verbatim, plus committer name/email, so committing one would
+# put the very secrets it found into git history. The directory was untracked
+# AND un-gitignored until 2026-08-03, so a plain `git add .` would have swept
+# it in. Scan artifacts are ephemeral - keep findings in the docs, not the raw
+# reports.
+security/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage
+*.lcov
+
+# Dependency directories
+node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Environment files
+.env*
+!.env.example
+
+# Build output
+dist/
+build/
+
+# Temporary files
+.tmp/
+temp/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
