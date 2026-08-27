@@ -1,4 +1,4 @@
-import pool from "./database.js";
+import pool from "./db.js";
 
 export async function registerUser(
   fullName: string,

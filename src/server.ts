@@ -2,10 +2,11 @@ import cors from "cors";
 import express from "express";
 import cookieParser from "cookie-parser";
 
-import { initDatabase } from "./database/database.js";
+import { initDatabase } from "./database/db.js";
 import authRoutes from "./routes/auth.js";
-import trainingsRoutes from "./routes/training-types.js";
+import trainingTypesRoutes from "./routes/training-types.js";
 import authMiddleware from "./middleware/auth.js";
+import trainingSessionsRoutes from "./routes/training-sessions.js";
 
 const app = express();
 
@@ -21,7 +22,8 @@ app.use(express.json());
 
 // Routes
 app.use("/auth", authRoutes);
-app.use("/trainings", authMiddleware, trainingsRoutes);
+app.use("/types", authMiddleware, trainingTypesRoutes);
+app.use("/sessions", authMiddleware, trainingSessionsRoutes);
 
 // Server
 const PORT = process.env.PORT || 4000;

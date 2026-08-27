@@ -5,12 +5,12 @@ import {
   editType,
   getAllTypes,
   getType,
-} from "../database/trainings.js";
+} from "../database/training-types.js";
 
 const router = express.Router();
 
 // Create a training type to training_types
-router.post("/create-type", async (req, res) => {
+router.post("/create", async (req, res) => {
   // Get userId from auth middleware
   const userId = req.userId;
   if (!userId) {
@@ -34,7 +34,7 @@ router.post("/create-type", async (req, res) => {
 });
 
 // Get a all training types from training_types
-router.get("/get-all-types", async (req, res) => {
+router.get("/get-all", async (req, res) => {
   // Get userId from auth middleware
   const userId = req.userId;
   if (!userId) {
@@ -52,7 +52,7 @@ router.get("/get-all-types", async (req, res) => {
 });
 
 // Get one training type from training_types
-router.get("/get-type/:id", async (req, res) => {
+router.get("/get/:id", async (req, res) => {
   // Get userId from auth middleware
   const userId = req.userId;
   if (!userId) {
@@ -78,7 +78,7 @@ router.get("/get-type/:id", async (req, res) => {
 });
 
 // Edit a training type in training_types
-router.put("/edit-type/:id", async (req, res) => {
+router.put("/edit/:id", async (req, res) => {
   // Get userId from auth middleware
   const userId = req.userId;
   if (!userId) {
@@ -121,7 +121,7 @@ router.put("/edit-type/:id", async (req, res) => {
 });
 
 // Delete a training type in training_types
-router.delete("/delete-type/:id", async (req, res) => {
+router.delete("/delete/:id", async (req, res) => {
   // Get userId from auth middleware
   const userId = req.userId;
   if (!userId) {
