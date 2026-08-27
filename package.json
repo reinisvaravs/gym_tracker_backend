@@ -9,13 +9,14 @@
     "knip": "knip --include exports",
     "lint": "eslint .",
     "format": "npx prettier . --write",
-    "check": "npm run format && npm run lint && npm run knip"
+    "check": "npm run format && npm run lint && npm run knip && npm run build"
   },
   "author": "Reinis Varavs",
   "license": "ISC",
   "description": "Backend for gym stats application",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
@@ -24,6 +25,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
