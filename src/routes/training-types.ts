@@ -26,7 +26,7 @@ router.post("/create", async (req, res) => {
   try {
     await createType(userId, trainingName, category);
   } catch (error) {
-    console.error("⚠️ [AUTH] Error creating training type:", error);
+    console.error("⚠️ [TYPES] Error creating training type:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 
@@ -46,7 +46,7 @@ router.get("/get-all", async (req, res) => {
 
     res.status(200).json(result);
   } catch (error) {
-    console.error("⚠️ [AUTH] Error getting all training types:", error);
+    console.error("⚠️ [TYPES] Error getting all training types:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -72,7 +72,7 @@ router.get("/get/:id", async (req, res) => {
 
     res.status(200).json(result);
   } catch (error) {
-    console.error("⚠️ [AUTH] Error getting a training type:", error);
+    console.error("⚠️ [TYPES] Error getting a training type:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -113,11 +113,11 @@ router.put("/edit/:id", async (req, res) => {
     // Do the edit
     await editType(trainingId, trainingName, category);
   } catch (error) {
-    console.error("⚠️ [AUTH] Error editing training type:", error);
+    console.error("⚠️ [TYPES] Error editing training type:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 
-  res.status(201).json({ message: "Training type edited successfully" });
+  res.status(200).json({ message: "Training type edited successfully" });
 });
 
 // Delete a training type in training_types
@@ -150,11 +150,11 @@ router.delete("/delete/:id", async (req, res) => {
     // Do the edit
     await deleteType(trainingId);
   } catch (error) {
-    console.error("⚠️ [AUTH] Error deleting training type:", error);
+    console.error("⚠️ [TYPES] Error deleting training type:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 
-  res.status(201).json({ message: "Training type deleted successfully" });
+  res.status(200).json({ message: "Training type deleted successfully" });
 });
 
 export default router;

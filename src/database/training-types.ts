@@ -17,7 +17,7 @@ export async function getAllTypes(userId: number) {
     `SELECT * FROM training_types WHERE user_id = $1`,
     [userId],
   );
-  return result.rows[0];
+  return result.rows;
 }
 
 export async function getType(trainingId: number) {

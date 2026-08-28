@@ -48,7 +48,8 @@ CREATE TABLE IF NOT EXISTS training_sets (
     avg_heart_rate_bpm INTEGER,
     avg_speed_kmh NUMERIC(5,2),
     avg_power_watts NUMERIC(6,2),
-    avg_cadence NUMERIC(5,2)
+    avg_cadence NUMERIC(5,2),
+    UNIQUE (session_id, set_order)
 );
 
 -- Standalone bodyweight check-ins, independent of any training type
