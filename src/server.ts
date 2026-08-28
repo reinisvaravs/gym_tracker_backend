@@ -4,9 +4,9 @@ import cookieParser from "cookie-parser";
 
 import { initDatabase } from "./database/db.js";
 import authRoutes from "./routes/auth.js";
-import trainingTypesRoutes from "./routes/training-types.js";
+import trainingTypesRoutes from "./routes/types.js";
 import authMiddleware from "./middleware/auth.js";
-import trainingSessionsRoutes from "./routes/training-sessions.js";
+import trainingSessionsRoutes from "./routes/sessions.js";
 
 const app = express();
 

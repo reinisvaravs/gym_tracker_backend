@@ -21,7 +21,7 @@ export async function getSessionWithSets(sessionId: number, userId: number) {
   return { ...session, sets: setsResult.rows };
 }
 
-export async function getAllSessionsWithSets(userId: number) {
+export async function getAllSessions(userId: number) {
   const result = await pool.query(
     `SELECT s.id, s.performed_on, s.notes, t.training_name, t.category,
     COUNT(st.id)::int AS set_count

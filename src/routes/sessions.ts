@@ -1,7 +1,7 @@
 import express from "express";
 import {
   createSessionWithSets,
-  getAllSessionsWithSets,
+  getAllSessions,
   getSessionWithSets,
 } from "../database/training-sessions.js";
 
@@ -88,7 +88,7 @@ router.get("/get-all", async (req, res) => {
   }
 
   try {
-    const sessions = await getAllSessionsWithSets(userId);
+    const sessions = await getAllSessions(userId);
 
     res.status(200).json(sessions);
   } catch (error) {
