@@ -7,7 +7,7 @@ export async function registerUser(
   passwordHash: string,
 ) {
   const result = await pool.query(
-    `INSERT INTO users (full_name, email, email_normalized, password_hash) VALUES ($1, $2, $3, $4) RETURNING id`,
+    `INSERT INTO users (full_name, email, email_normalized, password_hash) VALUES ($1, $2, $3, $4) RETURNING id, full_name, email`,
     [fullName, email, normalizedEmail, passwordHash],
   );
   return result.rows[0];

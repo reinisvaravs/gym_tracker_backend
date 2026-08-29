@@ -20,13 +20,23 @@ function normalizeEmail(email: string) {
 
 router.post("/register", async (req, res) => {
   // Get body
-  const { fullName, email, password } = req.body;
+  const fullName: unknown = req.body?.fullName;
+  const email: unknown = req.body?.email;
+  const password: unknown = req.body?.password;
 
   // Validate
-  if (!fullName || !email || !password) {
-    return res
-      .status(400)
-      .json({ message: "Full name, email, and password are required" });
+  if (
+    typeof fullName !== "string" ||
+    typeof email !== "string" ||
+    typeof password !== "string" ||
+    !fullName.trim() ||
+    !email.includes("@") ||
+    password.length < 8
+  ) {
+    return res.status(400).json({
+      message:
+        "Full name, a valid email, and a password of at least 8 characters are required",
+    });
   }
 
   // Normalize email (lowercase, trim whitespace, all gmail related stuff like dots and plus signs)
@@ -85,16 +95,20 @@ router.post("/register", async (req, res) => {
     maxAge: 3600000, // 1 hour
   });
 
-  // Return success response
-  res.status(201).json({ message: "User registered successfully" });
+  // Return success response and user
+  res.status(201).json({
+    message: "User registered successfully",
+    user: { id: userRow.id, fullName: userRow.full_name, email: userRow.email },
+  });
 });
 
 router.post("/login", async (req, res) => {
   // Get body
-  const { email, password } = req.body;
+  const email: unknown = req.body?.email;
+  const password: unknown = req.body?.password;
 
   // Validate
-  if (!email || !password) {
+  if (typeof email !== "string" || typeof password !== "string") {
     return res.status(400).json({ message: "Email and password are required" });
   }
 

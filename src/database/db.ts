@@ -12,6 +12,13 @@ if (!Number.isInteger(dbPort) || dbPort < 1 || dbPort > 65535) {
   throw new Error("DB_PORT must be a valid port number");
 }
 
+// pg returns NUMERIC as a string to protect arbitrary precision, and DATE as a
+// JS Date (which JSON-serializes with a timezone and can shift the day).
+// Our numbers are small and our dates are calendar days, so hand the frontend
+// plain numbers and "YYYY-MM-DD" strings.
+pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value) => Number(value));
+pg.types.setTypeParser(pg.types.builtins.DATE, (value) => value);
+
 const pool = new pg.Pool({
   host: process.env.DB_HOST,
   port: dbPort,

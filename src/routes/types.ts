@@ -5,7 +5,10 @@ import {
   editType,
   getAllTypes,
   getType,
-} from "../database/training-types.js";
+  isCategory,
+  CATEGORIES,
+} from "../database/types.js";
+import pg from "pg";
 
 const router = express.Router();
 
@@ -18,19 +21,32 @@ router.post("/create", async (req, res) => {
   }
 
   // Body
-  const { trainingName, category } = req.body;
-  if (!trainingName || !category) {
-    return res.status(400).json({ message: "Name and category are required" });
+  const trainingName: unknown = req.body?.trainingName;
+  const category: unknown = req.body?.category;
+
+  if (typeof trainingName !== "string" || !trainingName.trim()) {
+    return res.status(400).json({ message: "Name is required" });
+  }
+  if (!isCategory(category)) {
+    return res.status(400).json({
+      message: `Category must be one of: ${CATEGORIES.join(", ")}`,
+    });
   }
 
   try {
-    await createType(userId, trainingName, category);
+    const created = await createType(userId, trainingName, category);
+    res.status(201).json(created);
   } catch (error) {
+    if (error instanceof pg.DatabaseError && error.code === "23505") {
+      // not an error so no log
+      return res
+        .status(409)
+        .json({ message: "This training type name already exists" });
+    }
+
     console.error("⚠️ [TYPES] Error creating training type:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
-
-  res.status(201).json({ message: "Training type created successfully" });
 });
 
 // Get a all training types from training_types
@@ -60,14 +76,16 @@ router.get("/get/:id", async (req, res) => {
   }
 
   const trainingId = Number(req.params.id);
+  if (!Number.isInteger(trainingId) || trainingId <= 0) {
+    return res
+      .status(400)
+      .json({ message: "Valid training type ID is required" });
+  }
 
   try {
-    const result = await getType(trainingId);
+    const result = await getType(trainingId, userId);
     if (!result) {
       return res.status(404).json({ message: "Training type not found" });
-    }
-    if (result.user_id !== userId) {
-      return res.status(401).json({ message: "Unauthorized" });
     }
 
     res.status(200).json(result);
@@ -85,10 +103,19 @@ router.put("/edit/:id", async (req, res) => {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  // Optional body - at least one field must be present
-  const { trainingName, category } = req.body ?? {};
+  const trainingName: unknown = req.body?.trainingName;
+  const category: unknown = req.body?.category;
+
   if (trainingName === undefined && category === undefined) {
     return res.status(400).json({ message: "Nothing to update" });
+  }
+  if (trainingName !== undefined && typeof trainingName !== "string") {
+    return res.status(400).json({ message: "Name must be a string" });
+  }
+  if (category !== undefined && !isCategory(category)) {
+    return res.status(400).json({
+      message: `Category must be one of: ${CATEGORIES.join(", ")}`,
+    });
   }
 
   const trainingId = Number(req.params.id);
@@ -99,25 +126,22 @@ router.put("/edit/:id", async (req, res) => {
   }
 
   try {
-    // Check if user is owner of this row
-    const result = await getType(trainingId);
-    if (!result) {
+    const updated = await editType(trainingId, userId, trainingName, category);
+    if (!updated) {
       return res.status(404).json({ message: "Training type not found" });
     }
-
-    // check ownership
-    if (result.user_id !== userId) {
-      return res.status(401).json({ message: "Unauthorized" });
+    res.status(200).json(updated);
+  } catch (error) {
+    if (error instanceof pg.DatabaseError && error.code === "23505") {
+      // not an error so no log
+      return res
+        .status(409)
+        .json({ message: "This training type name already exists" });
     }
 
-    // Do the edit
-    await editType(trainingId, trainingName, category);
-  } catch (error) {
     console.error("⚠️ [TYPES] Error editing training type:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
-
-  res.status(200).json({ message: "Training type edited successfully" });
 });
 
 // Delete a training type in training_types
@@ -136,25 +160,17 @@ router.delete("/delete/:id", async (req, res) => {
   }
 
   try {
-    // Check if user is owner of this row
-    const result = await getType(trainingId);
-    if (!result) {
+    const deleted = await deleteType(trainingId, userId);
+    if (!deleted) {
       return res.status(404).json({ message: "Training type not found" });
     }
-
-    // check ownership
-    if (result.user_id !== userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    // Do the edit
-    await deleteType(trainingId);
+    res
+      .status(200)
+      .json({ message: "Training type deleted successfully", id: deleted.id });
   } catch (error) {
     console.error("⚠️ [TYPES] Error deleting training type:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
-
-  res.status(200).json({ message: "Training type deleted successfully" });
 });
 
 export default router;

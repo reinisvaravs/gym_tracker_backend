@@ -64,24 +64,25 @@ export async function createSessionWithSets(
       SELECT $1, id, $3, $4
       FROM training_types
       WHERE id = $2 AND user_id = $1
-      RETURNING id`,
+      RETURNING *`,
       [userId, trainingTypeId, performedOn, notes],
     );
 
-    const sessionId = sessionResult.rows[0]?.id;
-    if (!sessionId) {
+    const session = sessionResult.rows[0];
+    if (!session) {
       await client.query("ROLLBACK");
       return undefined;
     }
 
+    const insertedSets = [];
     for (const [index, set] of sets.entries()) {
-      await client.query(
+      const setResult = await client.query(
         `INSERT INTO training_sets
         (session_id, set_order, weight_kg, reps, duration_seconds, distance_km,
         avg_heart_rate_bpm, avg_speed_kmh, avg_power_watts, avg_cadence)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
         [
-          sessionId,
+          session.id,
           index + 1,
           set.weight_kg ?? null,
           set.reps ?? null,
@@ -93,10 +94,11 @@ export async function createSessionWithSets(
           set.avg_cadence ?? null,
         ],
       );
+      insertedSets.push(setResult.rows[0]);
     }
 
     await client.query("COMMIT");
-    return sessionId;
+    return { ...session, sets: insertedSets };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
