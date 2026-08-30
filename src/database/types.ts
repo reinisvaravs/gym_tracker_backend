@@ -27,7 +27,7 @@ export async function createType(
 
 export async function getAllTypes(userId: number) {
   const result = await pool.query(
-    `SELECT * FROM training_types WHERE user_id = $1`,
+    `SELECT * FROM training_types WHERE user_id = $1 ORDER BY training_name`,
     [userId],
   );
   return result.rows;

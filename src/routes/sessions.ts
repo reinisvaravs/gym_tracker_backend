@@ -1,6 +1,11 @@
 import express from "express";
 import {
+  addSetToSession,
   createSessionWithSets,
+  deleteSession,
+  deleteSet,
+  editSessionNotes,
+  editSet,
   getAllSessions,
   type SetInput,
 } from "../database/sessions.js";
@@ -49,6 +54,12 @@ function toSetInput(value: unknown): SetInput | undefined {
   }
 
   return set;
+}
+
+// Shared by every route that takes an :id
+function toId(value: unknown) {
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : undefined;
 }
 
 const router = express.Router();
@@ -135,6 +146,146 @@ router.get("/get-all", async (req, res) => {
     res.status(200).json(sessions);
   } catch (error) {
     console.error("⚠️ [SESSIONS] Error getting all sessions:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Append one set to a session, as it is performed
+router.post("/sets/create", async (req, res) => {
+  const userId = req.userId;
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const sessionId = toId(req.body?.sessionId);
+  if (!sessionId) {
+    return res.status(400).json({ message: "Valid session ID is required" });
+  }
+
+  const set = toSetInput(req.body);
+  if (!set) {
+    return res.status(400).json({ message: "Set has invalid values" });
+  }
+
+  try {
+    const created = await addSetToSession(sessionId, userId, set);
+    if (!created) {
+      return res.status(404).json({ message: "Training session not found" });
+    }
+    res.status(201).json(created);
+  } catch (error) {
+    console.error("⚠️ [SESSIONS] Error adding a set:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Replace a set's values. Omitted fields are cleared, not preserved.
+router.put("/sets/edit/:id", async (req, res) => {
+  const userId = req.userId;
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const setId = toId(req.params.id);
+  if (!setId) {
+    return res.status(400).json({ message: "Valid set ID is required" });
+  }
+
+  const set = toSetInput(req.body);
+  if (!set) {
+    return res.status(400).json({ message: "Set has invalid values" });
+  }
+
+  try {
+    const updated = await editSet(setId, userId, set);
+    if (!updated) {
+      return res.status(404).json({ message: "Set not found" });
+    }
+    res.status(200).json(updated);
+  } catch (error) {
+    console.error("⚠️ [SESSIONS] Error editing a set:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.delete("/sets/delete/:id", async (req, res) => {
+  const userId = req.userId;
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const setId = toId(req.params.id);
+  if (!setId) {
+    return res.status(400).json({ message: "Valid set ID is required" });
+  }
+
+  try {
+    const deleted = await deleteSet(setId, userId);
+    if (!deleted) {
+      return res.status(404).json({ message: "Set not found" });
+    }
+    res
+      .status(200)
+      .json({ message: "Set deleted successfully", id: deleted.id });
+  } catch (error) {
+    console.error("⚠️ [SESSIONS] Error deleting a set:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Notes are the only editable field: the training type and date define which
+// session this is, and session_order is managed by the database.
+router.put("/edit/:id", async (req, res) => {
+  const userId = req.userId;
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const sessionId = toId(req.params.id);
+  if (!sessionId) {
+    return res.status(400).json({ message: "Valid session ID is required" });
+  }
+
+  const notes: unknown = req.body?.notes;
+  if (notes !== null && typeof notes !== "string") {
+    return res.status(400).json({ message: "Notes must be a string or null" });
+  }
+
+  try {
+    const updated = await editSessionNotes(sessionId, userId, notes);
+    if (!updated) {
+      return res.status(404).json({ message: "Training session not found" });
+    }
+    res.status(200).json(updated);
+  } catch (error) {
+    console.error("⚠️ [SESSIONS] Error editing a session:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Its sets go with it, via ON DELETE CASCADE
+router.delete("/delete/:id", async (req, res) => {
+  const userId = req.userId;
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const sessionId = toId(req.params.id);
+  if (!sessionId) {
+    return res.status(400).json({ message: "Valid session ID is required" });
+  }
+
+  try {
+    const deleted = await deleteSession(sessionId, userId);
+    if (!deleted) {
+      return res.status(404).json({ message: "Training session not found" });
+    }
+    res.status(200).json({
+      message: "Training session deleted successfully",
+      id: deleted.id,
+    });
+  } catch (error) {
+    console.error("⚠️ [SESSIONS] Error deleting a session:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 });
