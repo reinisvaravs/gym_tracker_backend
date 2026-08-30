@@ -12,7 +12,6 @@ const SET_FIELDS = [
   "duration_seconds",
   "distance_km",
   "avg_heart_rate_bpm",
-  "avg_speed_kmh",
   "avg_power_watts",
   "avg_cadence",
 ] as const;
@@ -36,6 +35,10 @@ function toSetInput(value: unknown): SetInput | undefined {
 
   const raw = value as Record<string, unknown>;
   const set: SetInput = {};
+
+  if (raw.avg_speed_kmh !== undefined) {
+    return undefined; // computed from distance + duration; not settable
+  }
 
   for (const field of SET_FIELDS) {
     const fieldValue = raw[field];

@@ -42,7 +42,6 @@ export type SetInput = {
   duration_seconds?: number | null;
   distance_km?: number | null;
   avg_heart_rate_bpm?: number | null;
-  avg_speed_kmh?: number | null;
   avg_power_watts?: number | null;
   avg_cadence?: number | null;
 };
@@ -79,8 +78,8 @@ export async function createSessionWithSets(
       const setResult = await client.query(
         `INSERT INTO training_sets
         (session_id, set_order, weight_kg, reps, duration_seconds, distance_km,
-        avg_heart_rate_bpm, avg_speed_kmh, avg_power_watts, avg_cadence)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+        avg_heart_rate_bpm, avg_power_watts, avg_cadence)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
         [
           session.id,
           index + 1,
@@ -89,7 +88,6 @@ export async function createSessionWithSets(
           set.duration_seconds ?? null,
           set.distance_km ?? null,
           set.avg_heart_rate_bpm ?? null,
-          set.avg_speed_kmh ?? null,
           set.avg_power_watts ?? null,
           set.avg_cadence ?? null,
         ],

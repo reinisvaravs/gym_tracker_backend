@@ -35,8 +35,10 @@ CREATE TABLE IF NOT EXISTS training_sessions (
 --   weighted_reps   -> weight_kg + reps
 --   bodyweight_reps -> reps only
 --   cardio          -> duration_seconds, distance_km, avg_heart_rate_bpm,
---                      avg_speed_kmh, avg_power_watts, avg_cadence (optional;
---                      a cardio session is usually just one "set" = one row)
+--                      avg_power_watts, avg_cadence (optional; a cardio
+--                      session is usually just one "set" = one row).
+--                      avg_speed_kmh is derived from distance + duration
+--                      and cannot be written directly.
 CREATE TABLE IF NOT EXISTS training_sets (
     id SERIAL PRIMARY KEY,
     session_id INTEGER NOT NULL REFERENCES training_sessions(id) ON DELETE CASCADE,
@@ -46,7 +48,12 @@ CREATE TABLE IF NOT EXISTS training_sets (
     duration_seconds INTEGER,
     distance_km NUMERIC(6,2),
     avg_heart_rate_bpm INTEGER,
-    avg_speed_kmh NUMERIC(5,2),
+    avg_speed_kmh NUMERIC(6,2) GENERATED ALWAYS AS (
+        CASE
+            WHEN distance_km IS NOT NULL AND duration_seconds > 0
+            THEN ROUND(distance_km * 3600.0 / duration_seconds, 2)
+        END
+    ) STORED,
     avg_power_watts NUMERIC(6,2),
     avg_cadence NUMERIC(5,2),
     UNIQUE (session_id, set_order)
