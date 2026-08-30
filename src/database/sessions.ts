@@ -24,15 +24,19 @@ export async function getSessionWithSets(sessionId: number, userId: number) {
 export async function getAllSessions(userId: number) {
   const result = await pool.query(
     `SELECT s.id, s.performed_on, s.notes, t.training_name, t.category,
-    COUNT(st.id)::int AS set_count
-    FROM training_sessions s
-    JOIN training_types t ON t.id = s.training_type_id
-    LEFT JOIN training_sets st ON st.session_id = s.id
-    WHERE s.user_id = $1
-    GROUP BY s.id, t.id
-    ORDER BY s.performed_on DESC, s.id DESC`,
+            COALESCE(
+              (SELECT json_agg(st ORDER BY st.set_order)
+               FROM training_sets st
+               WHERE st.session_id = s.id),
+              '[]'::json
+            ) AS sets
+     FROM training_sessions s
+     JOIN training_types t ON t.id = s.training_type_id
+     WHERE s.user_id = $1
+     ORDER BY s.performed_on DESC, s.id DESC`,
     [userId],
   );
+
   return result.rows;
 }
 
