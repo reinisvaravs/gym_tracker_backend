@@ -1,26 +1,5 @@
 import pool from "./db.js";
 
-export async function getSessionWithSets(sessionId: number, userId: number) {
-  const sessionResult = await pool.query(
-    `SELECT s.id, s.training_type_id, s.performed_on, s.notes, s.created_at,
-            t.training_name, t.category
-     FROM training_sessions s
-     JOIN training_types t ON t.id = s.training_type_id
-     WHERE s.id = $1 AND s.user_id = $2`,
-    [sessionId, userId],
-  );
-
-  const session = sessionResult.rows[0];
-  if (!session) return undefined;
-
-  const setsResult = await pool.query(
-    `SELECT * FROM training_sets WHERE session_id = $1 ORDER BY set_order`,
-    [sessionId],
-  );
-
-  return { ...session, sets: setsResult.rows };
-}
-
 export async function getAllSessions(userId: number) {
   const result = await pool.query(
     `SELECT s.id, s.performed_on, s.notes, t.training_name, t.category,

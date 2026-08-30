@@ -2,7 +2,6 @@ import express from "express";
 import {
   createSessionWithSets,
   getAllSessions,
-  getSessionWithSets,
   type SetInput,
 } from "../database/sessions.js";
 
@@ -53,33 +52,6 @@ function toSetInput(value: unknown): SetInput | undefined {
 }
 
 const router = express.Router();
-
-// Get one training type from training_types
-router.get("/get/:id", async (req, res) => {
-  // Get userId from auth middleware
-  const userId = req.userId;
-  if (!userId) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  const sessionId = Number(req.params.id);
-
-  if (!Number.isInteger(sessionId) || sessionId <= 0) {
-    return res.status(400).json({ message: "Valid session ID is required" });
-  }
-
-  try {
-    const result = await getSessionWithSets(sessionId, userId);
-    if (!result) {
-      return res.status(404).json({ message: "Training session not found" });
-    }
-
-    res.status(200).json(result);
-  } catch (error) {
-    console.error("⚠️ [SESSIONS] Error getting a training session:", error);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-});
 
 // Create a session and its sets
 router.post("/create", async (req, res) => {

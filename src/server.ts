@@ -1,3 +1,4 @@
+import compression from "compression";
 import cors from "cors";
 import express from "express";
 import cookieParser from "cookie-parser";
@@ -11,6 +12,9 @@ import trainingSessionsRoutes from "./routes/sessions.js";
 const app = express();
 
 // Middleware
+// /sessions/get-all ships the full history: the same handful of keys repeated
+// across every set, mostly nulls. That compresses roughly 10x.
+app.use(compression());
 app.use(
   cors({
     origin: "http://localhost:3000",
