@@ -91,7 +91,9 @@ router.post("/register", async (req, res) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    // Frontend and backend live on different onrender.com subdomains, which the
+    // browser treats as cross-site; "strict" cookies are never sent there.
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
     maxAge: 3600000, // 1 hour
   });
 
@@ -148,7 +150,9 @@ router.post("/login", async (req, res) => {
   res.cookie("token", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    // Frontend and backend live on different onrender.com subdomains, which the
+    // browser treats as cross-site; "strict" cookies are never sent there.
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
     maxAge: 3600000, // 1 hour
   });
 

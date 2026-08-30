@@ -4,8 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "tsx --env-file=.env src/server.ts",
-    "build": "tsc",
+    "build": "tsc && cp src/database/database.sql dist/database/",
     "start": "node --env-file=.env dist/server.js",
+    "start:prod": "node dist/server.js",
     "knip": "knip --include exports",
     "lint": "eslint .",
     "format": "npx prettier . --write",
