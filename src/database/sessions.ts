@@ -33,7 +33,7 @@ export async function getAllSessions(userId: number) {
      FROM training_sessions s
      JOIN training_types t ON t.id = s.training_type_id
      WHERE s.user_id = $1
-     ORDER BY s.performed_on DESC, s.id DESC`,
+     ORDER BY s.performed_on DESC, s.session_order`,
     [userId],
   );
 
@@ -62,11 +62,21 @@ export async function createSessionWithSets(
   try {
     await client.query("BEGIN");
 
+    // session_order is assigned here rather than sent by the caller: it is
+    // always "next slot for this user on this day", so nothing upstream has
+    // to know or validate it.
     const sessionResult = await client.query(
-      `INSERT INTO training_sessions (user_id, training_type_id, performed_on, notes)
-      SELECT $1, id, $3, $4
-      FROM training_types
-      WHERE id = $2 AND user_id = $1
+      `INSERT INTO training_sessions
+        (user_id, training_type_id, performed_on, notes, session_order)
+      SELECT $1, t.id, $3, $4,
+             COALESCE(
+               (SELECT MAX(s.session_order) + 1
+                FROM training_sessions s
+                WHERE s.user_id = $1 AND s.performed_on = $3),
+               1
+             )
+      FROM training_types t
+      WHERE t.id = $2 AND t.user_id = $1
       RETURNING *`,
       [userId, trainingTypeId, performedOn, notes],
     );

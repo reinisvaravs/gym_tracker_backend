@@ -20,12 +20,16 @@ CREATE TABLE IF NOT EXISTS training_types (
     UNIQUE (user_id, training_name)
 );
 
--- One entry per training type performed on a given date
+-- One entry per training type performed on a given date.
+-- session_order is the position within that day, 1-based: the first exercise
+-- performed is 1. Later positions are done tired, so the order is part of the
+-- data, not a display detail.
 CREATE TABLE IF NOT EXISTS training_sessions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     training_type_id INTEGER NOT NULL REFERENCES training_types(id) ON DELETE CASCADE,
     performed_on DATE NOT NULL,
+    session_order INTEGER NOT NULL,
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -67,3 +71,26 @@ CREATE TABLE IF NOT EXISTS bodyweight_logs (
     weight_kg NUMERIC(5,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Migrations
+-- This file re-runs on every boot, so everything below must be idempotent.
+-- CREATE TABLE IF NOT EXISTS won't add a column to a table that already
+-- exists, so columns added after a table shipped need an ALTER here too.
+
+-- training_sessions.session_order: add it nullable, backfill existing rows
+-- from insertion order, then require it. All three no-op after the first run.
+ALTER TABLE training_sessions
+    ADD COLUMN IF NOT EXISTS session_order INTEGER;
+
+UPDATE training_sessions s
+SET session_order = ranked.position
+FROM (
+    SELECT id, ROW_NUMBER() OVER (
+        PARTITION BY user_id, performed_on ORDER BY id
+    ) AS position
+    FROM training_sessions
+) ranked
+WHERE s.id = ranked.id AND s.session_order IS NULL;
+
+ALTER TABLE training_sessions
+    ALTER COLUMN session_order SET NOT NULL;
