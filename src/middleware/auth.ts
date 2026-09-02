@@ -1,3 +1,4 @@
+import env from "../../env.ts";
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
@@ -8,7 +9,7 @@ function authMiddleware(req: Request, res: Response, next: NextFunction) {
     return res.status(401).json({ message: "No token provided" });
   }
 
-  const jwtSecret = process.env.JWT_SECRET;
+  const jwtSecret = env.JWT_SECRET;
 
   if (!jwtSecret) {
     throw new Error("JWT_SECRET is not configured");

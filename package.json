@@ -3,44 +3,50 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx --env-file=.env src/server.ts",
-    "build": "tsc && cp src/database/database.sql dist/database/",
-    "start": "node --env-file=.env dist/server.js",
-    "start:prod": "node dist/server.js",
+    "dev": "node --watch src/index.ts",
+    "start": "node src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run format && npm run lint && npm run knip && npm run typecheck",
     "knip": "knip --include exports",
     "lint": "eslint .",
     "format": "npx prettier . --write",
-    "check": "npm run format && npm run lint && npm run knip && npm run build"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "author": "Reinis Varavs",
   "license": "ISC",
   "description": "Backend for gym stats application",
   "dependencies": {
     "bcrypt": "^6.0.0",
-    "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
+    "custom-env": "^2.0.6",
     "express": "^5.2.1",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
-    "pg": "^8.23.0"
+    "morgan": "^1.12.0",
+    "pg": "^8.23.0",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@types/bcrypt": "^6.0.0",
-    "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
     "@types/node": "^26.3.0",
     "@types/pg": "^8.23.1",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-n": "^18.3.0",
     "eslint-plugin-security": "^4.0.1",
-    "globals": "^17.11.0",
+    "globals": "^17.12.0",
     "knip": "^6.32.3",
     "tsx": "^4.23.12",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
   }
 }

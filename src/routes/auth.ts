@@ -1,8 +1,9 @@
+import { env, isProd } from "../../env.ts";
 import bcrypt from "bcrypt";
 import express from "express";
-import jwt from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
 
-import { registerUser, getUserByEmail } from "../database/users.js";
+import { registerUser, getUserByEmail } from "../database/users.ts";
 
 const router = express.Router();
 
@@ -55,7 +56,7 @@ router.post("/register", async (req, res) => {
   }
 
   // Hash password
-  const passwordHash = bcrypt.hashSync(password, 10);
+  const passwordHash = bcrypt.hashSync(password, env.BCRYPT_ROUNDS);
 
   let userRow;
 
@@ -72,11 +73,7 @@ router.post("/register", async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 
-  const jwtSecret = process.env.JWT_SECRET;
-
-  if (!jwtSecret) {
-    throw new Error("JWT_SECRET is not configured");
-  }
+  const jwtSecret = env.JWT_SECRET;
 
   // Generate a JWT token for the new user
   const token = jwt.sign(
@@ -84,16 +81,16 @@ router.post("/register", async (req, res) => {
       userId: userRow.id,
     },
     jwtSecret,
-    { expiresIn: "1h" },
+    { expiresIn: env.JWT_EXPIRES_IN as SignOptions["expiresIn"] },
   );
 
   // Return token securely as a cookie
   res.cookie("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isProd(),
     // Frontend and backend live on different onrender.com subdomains, which the
     // browser treats as cross-site; "strict" cookies are never sent there.
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+    sameSite: isProd() ? "none" : "strict",
     maxAge: 3600000, // 1 hour
   });
 
@@ -131,11 +128,7 @@ router.post("/login", async (req, res) => {
     return res.status(401).json({ message: "Invalid email or password" });
   }
 
-  const jwtSecret = process.env.JWT_SECRET;
-
-  if (!jwtSecret) {
-    throw new Error("JWT_SECRET is not configured");
-  }
+  const jwtSecret = env.JWT_SECRET;
 
   // Generate JWT
   const token = jwt.sign(
@@ -143,16 +136,16 @@ router.post("/login", async (req, res) => {
       userId: user.id,
     },
     jwtSecret,
-    { expiresIn: "1h" },
+    { expiresIn: env.JWT_EXPIRES_IN as SignOptions["expiresIn"] },
   );
 
   // Return token securely as a cookie
   res.cookie("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isProd(),
     // Frontend and backend live on different onrender.com subdomains, which the
     // browser treats as cross-site; "strict" cookies are never sent there.
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+    sameSite: isProd() ? "none" : "strict",
     maxAge: 3600000, // 1 hour
   });
 

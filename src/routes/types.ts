@@ -7,7 +7,7 @@ import {
   getType,
   isCategory,
   CATEGORIES,
-} from "../database/types.js";
+} from "../database/types.ts";
 import pg from "pg";
 
 const router = express.Router();

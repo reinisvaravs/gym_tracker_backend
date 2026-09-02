@@ -1,4 +1,4 @@
-import pool from "./db.js";
+import pool from "./db.ts";
 
 // Mirrors the CHECK constraint on training_types.category in database.sql
 export const CATEGORIES = [

@@ -8,7 +8,7 @@ import {
   editSet,
   getAllSessions,
   type SetInput,
-} from "../database/sessions.js";
+} from "../database/sessions.ts";
 
 const SET_FIELDS = [
   "weight_kg",

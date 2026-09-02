@@ -1,44 +1,74 @@
-import compression from "compression";
+import { env, isDev } from "../env.ts";
 import cors from "cors";
 import express from "express";
-import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import morgan from "morgan";
 
-import { initDatabase } from "./database/db.js";
-import authRoutes from "./routes/auth.js";
-import trainingTypesRoutes from "./routes/types.js";
-import authMiddleware from "./middleware/auth.js";
-import trainingSessionsRoutes from "./routes/sessions.js";
+import authRoutes from "./routes/auth.ts";
+import trainingTypesRoutes from "./routes/types.ts";
+import authMiddleware from "./middleware/auth.ts";
+import trainingSessionsRoutes from "./routes/sessions.ts";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
 // Middleware
-// /sessions/get-all ships the full history: the same handful of keys repeated
-// across every set, mostly nulls. That compresses roughly 10x.
-app.use(compression());
+app.use(helmet());
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: env.CORS_ORIGIN,
     credentials: true,
   }),
 );
-app.use(cookieParser());
+
 app.use(express.json());
+app.use(cookieParser());
+app.use(express.urlencoded({ extended: true }));
+app.use(
+  morgan(
+    "dev",
+    // { skip: () => isTestEnv() }
+  ),
+);
+
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    service: "Gym Tracker API",
+  });
+});
 
 // Routes
 app.use("/auth", authRoutes);
 app.use("/types", authMiddleware, trainingTypesRoutes);
 app.use("/sessions", authMiddleware, trainingSessionsRoutes);
 
-// Server
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, async () => {
-  console.log(`Server is running on port ${PORT}`);
-
-  // Initialize the database when the server starts
-  try {
-    await initDatabase();
-    console.log("✅ [SERVER] Database initialized successfully");
-  } catch (error) {
-    console.error("⚠️ [SERVER] Failed to initialize database:", error);
-  }
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    error: "Route not found",
+    path: req.originalUrl,
+  });
 });
+
+// Global error handler
+app.use(
+  (
+    err: Error,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction,
+  ) => {
+    console.error(err.stack);
+    res.status(500).json({
+      error: "Something went wrong!",
+      ...(isDev() && { details: err.message }),
+    });
+  },
+);
+
+export { app };
+
+export default app;
