@@ -7,6 +7,7 @@ import {
   editSessionNotes,
   editSet,
   getAllSessions,
+  reorderSessions,
   type SetInput,
 } from "../database/sessions.ts";
 
@@ -233,8 +234,67 @@ router.delete("/sets/delete/:id", async (req, res) => {
   }
 });
 
-// Notes are the only editable field: the training type and date define which
-// session this is, and session_order is managed by the database.
+// Reorder one day's exercises. The whole day is sent, in the order it should
+// end up in, rather than "move session 7 up": the renumber then happens in a
+// single transaction, and a client working from a stale copy of the day is
+// rejected instead of silently scrambling the order.
+router.put("/reorder", async (req, res) => {
+  const userId = req.userId;
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const performedOn: unknown = req.body?.performedOn;
+  const sessionIds: unknown = req.body?.sessionIds;
+
+  if (!isCalendarDate(performedOn)) {
+    return res
+      .status(400)
+      .json({ message: "Performed on must be a date like 2026-08-29" });
+  }
+  if (!Array.isArray(sessionIds) || sessionIds.length === 0) {
+    return res
+      .status(400)
+      .json({ message: "Session IDs must be a non-empty array" });
+  }
+
+  const ids: number[] = [];
+  for (const value of sessionIds) {
+    const id = toId(value);
+    if (!id) {
+      return res
+        .status(400)
+        .json({ message: "Valid session IDs are required" });
+    }
+    ids.push(id);
+  }
+  // Duplicates would make the day shorter than the list and get caught below
+  // as "not the whole day", but that reads as a 404 for something the caller
+  // can actually see is wrong.
+  if (new Set(ids).size !== ids.length) {
+    return res.status(400).json({ message: "Session IDs must be unique" });
+  }
+
+  try {
+    const reordered = await reorderSessions(userId, performedOn, ids);
+
+    // The ids aren't exactly this user's sessions on that date: a stale
+    // client, a deleted session, or someone else's id
+    if (!reordered) {
+      return res
+        .status(404)
+        .json({ message: "Training sessions not found for that date" });
+    }
+
+    res.status(200).json({ ids });
+  } catch (error) {
+    console.error("⚠️ [SESSIONS] Error reordering sessions:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Notes are the only editable field here: the training type and date define
+// which session this is, and session_order moves through /reorder above.
 router.put("/edit/:id", async (req, res) => {
   const userId = req.userId;
   if (!userId) {

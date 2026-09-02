@@ -177,6 +177,62 @@ export async function deleteSet(setId: number, userId: number) {
   return result.rows[0];
 }
 
+// Renumbers a whole day at once: the caller sends every session it has on
+// that date, in the order it wants them, and each id's position becomes its
+// session_order. Returns false unless those ids are exactly that user's
+// sessions for that day, so a stale or partial list can't half-renumber it
+// and a foreign id can't be smuggled in.
+export async function reorderSessions(
+  userId: number,
+  performedOn: string,
+  sessionIds: number[],
+) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Locked so a concurrent edit can't land between this check and the
+    // renumber below.
+    const existing = await client.query(
+      `SELECT id FROM training_sessions
+       WHERE user_id = $1 AND performed_on = $2
+       FOR UPDATE`,
+      [userId, performedOn],
+    );
+
+    const owned = new Set<number>(existing.rows.map((row) => row.id));
+    const isWholeDay =
+      owned.size === sessionIds.length &&
+      sessionIds.every((id) => owned.has(id));
+
+    if (!isWholeDay) {
+      await client.query("ROLLBACK");
+      return false;
+    }
+
+    // One statement rather than a loop: WITH ORDINALITY numbers the array,
+    // and there is no UNIQUE constraint on (user_id, performed_on,
+    // session_order) for the intermediate states to collide with.
+    await client.query(
+      `UPDATE training_sessions s
+       SET session_order = new_order.ordinal
+       FROM unnest($3::int[]) WITH ORDINALITY AS new_order(session_id, ordinal)
+       WHERE s.id = new_order.session_id
+         AND s.user_id = $1 AND s.performed_on = $2`,
+      [userId, performedOn, sessionIds],
+    );
+
+    await client.query("COMMIT");
+    return true;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 export async function editSessionNotes(
   sessionId: number,
   userId: number,
